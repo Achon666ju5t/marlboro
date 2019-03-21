@@ -81,7 +81,7 @@ if [[ "$verif" = 'y' ]]; then
 	echo -n "$gover | Your Point $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)")"
 fi
 if [[ "$wacing" = 'y' ]]; then
-	if [[ !-f vid.txt ]]; then
+	if [[ ! -f 'vid.txt' ]]; then
 		get_video $decide_csrf | shuf | head -4 >> vid.txt
 	fi
 	for nonton in $(cat vid.txt | head -4); do
