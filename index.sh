@@ -1,11 +1,21 @@
 #!/bin/bash
-# Marlboro Auto Get POINT
-# Issued: 21 March 2019
-# Made W/Love By Demeter16
-# Any issue plz contact https://facebook.com/Achon666ju5t.mil.id
+# Bot Marlboro Coded By Achon666ju5t - Demeter16
+echo -n 'Started at: '
+date +%R
 cok='cookies.txt'
+countdown() {
+  secs=$1
+  shift
+  msg=$@
+  while [ $secs -gt 0 ]
+  do
+    printf "\r\033[KMasih Nonton.. Tunggu  %.d $msg" $((secs--))
+    sleep 1
+  done
+  echo
+}
 login(){
-	curl -s -X POST \
+	curl -s -X POST --compressed \
 	--url 'https://www.marlboro.id/auth/login?ref_uri=/profile'\
 	-H 'Accept-Language: en-US,en;q=0.9' \
 	-H 'Connection: keep-alive' \
@@ -19,7 +29,7 @@ login(){
 	--data-urlencode 'password='$2''\
 	--data-urlencode 'decide_csrf='$3'' \
 	--data-urlencode 'ref_uri=%252Fprofile0' \
-	--cookie-jar $cok -b $cok	
+	--cookie-jar $cok -b $cok
 }
 get_point(){
 	curl -s 'https://www.marlboro.id/profile' -b $cok -c $cok
@@ -46,59 +56,74 @@ function verif_data(){
 	-b $cok --cookie-jar $cok \
 	| jq .data.status
 }
+get_new_csrf(){
+	curl -s --url 'https://www.marlboro.id/' -b $cok -c $cok
+}
+echo -n 'Jumlah Login: '
+read jumlah
 echo -n 'Do With Verif data? [y/n] '
 read verif
 echo -n 'Do With Watching Movie? [y/n] '
 read wacing
-read -p 'Your Email List: ' list
-y=$(gawk -F: '{ print $1 }' $list)
-x=$(gawk -F: '{ print $2 }' $list)
+read -p 'Your Email List File: ' list
+y=$(cat $list)
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'email=($y)'
-IFS=$'\r\n' GLOBIGNORE='*' command eval  'pass=($x)'
 for (( i = 0; i < "${#email[@]}"; i++ )); do
 	decide_csrf=$(echo $(get_csrf) | grep -Po "(?<=name\=\"decide_csrf\" value\=\").*?(?=\" />)" | head -1)
 	emails="${email[$i]}"
-	echo -n "$emails | AutoLogin: "
-	pw="${pass[$i]}"
-	for opateuy in {1..4}; do
+	printf "%-50s $emails\n"
+	pw='3xcr3w-ID123'
+	if [[ "$verif" = 'y' ]]; then
 		ceklogin=$(login $emails $pw $decide_csrf | grep -Po "(?<=\"message\":\").*?(?=\")")
-	done
+		gover=$(verif_data $decide_csrf)
+		echo -n "Verif Data: "
+		echo -n "$gover | Your Point $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)") | "
+	fi
+		for ((e=0;e<$jumlah; e++ )); do
+		ceklogin=$(login $emails $pw $decide_csrf | grep -Po "(?<=\"message\":\").*?(?=\")")
 	if [[ "$ceklogin" =~ 'Akun lo telah dikunci' ]]; then
 		echo "Akun Dikunci (locked)"
+		continue
 	elif [[ "$ceklogin" =~ 'Email atau password yang lo masukan salah' ]]; then
 		echo -n "Wrong Password"
 	elif [[ "$ceklogin" =~ 'success' ]]; then
-		echo -n "OK | "
+		printf "AutoLogin: OK |"
 		if [[ "$verif" = 'n' && "$wacing" = 'n' ]]; then
-			echo -n "Your Point: $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)")"
+			printf "Your Point: $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)") "
 		fi
-	else
-		echo -n " | Wrong CSRF"
-	fi
-if [[ "$verif" = 'y' ]]; then
-	gover=$(verif_data $decide_csrf)
-	echo -n "Verif Data: "
-	echo -n "$gover | Your Point $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)")"
-fi
-if [[ "$wacing" = 'y' ]]; then
-	if [[ ! -f 'vid.txt' ]]; then
-		get_video $decide_csrf | shuf | head -4 >> vid.txt
-	fi
-	for nonton in $(cat vid.txt | head -4); do
-		echo -n "Watching: $nonton | "
-		for sepuluh in {1..10}; do
-			new_csrf=$(get_point | grep -Po "(?<=name\=\"decide_csrf\" value\=\").*?(?=\" />)" | head -1)
-			lalajo=$(nonton_video $nonton $new_csrf)
-		done
-		if [[ "$lalajo" =~ 'true' ]]; then
-			echo -n "OK | Your Point $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)") | "
-
-		else
-			echo -n 'BAD CSRF'
+		if [[ "$wacing" = 'y' ]]; then
+			for nonton in $(get_video $decide_csrf | shuf | head -1); do
+				echo -n "->$nonton | "
+				for ((oo=0; oo<3; oo++)); do
+					multi=$(get_new_csrf)
+					point=$(echo $(get_point) | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)")
+					new_csrf=$(echo $multi | grep -Po "(?<=name\=\"decide_csrf\" value\=\").*?(?=\" />)" | head -1)
+					lalajo=$(nonton_video $nonton $decide_csrf)
+					# echo $lalajo | jq .
+					# echo $multi
+					nobar=$(echo $lalajo | jq .data.finished)
+					if [[ "$nobar" = 'true' ]]; then
+						decide_csrf=$(echo $(get_csrf) | grep -Po "(?<=name\=\"decide_csrf\" value\=\").*?(?=\" />)" | head -1)
+						echo -n 'Sukses Nonton: '
+						break
+					elif [[ "$lalajo" =~ "Action is not allowed" ]]; then
+						echo -n "BAD CSRF | "
+						break
+					else
+						sleep 11
+					fi
+				done
+			done
+		# echo -n "OK | Your Point $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)")"
 		fi
-	done
-	echo ''
-fi
-rm vid.txt
-rm $cok
+		ceklogin=$(login $emails $pw $decide_csrf | grep -Po "(?<=\"message\":\").*?(?=\")")
+		printf "Your Point: $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)")\n"
+else
+	# echo "$ceklogin"
+		echo -n "Wrong CSRF | "
+	fi
 done
+echo ''
+done
+echo -n 'Ends at: '
+date +%R
