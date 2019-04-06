@@ -67,7 +67,7 @@ echo -n 'Do With Watching Movie? [y/n] '
 read wacing
 read -p 'Your Email List File: ' list
 y=$(gawk -F: '{ print $1 }' $list)
-x=$(gawk -F: '{ print $1 }' $list)
+x=$(gawk -F: '{ print $2 }' $list)
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'pwd=($x)'
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'email=($y)'
 for (( i = 0; i < "${#email[@]}"; i++ )); do
