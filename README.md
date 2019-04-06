@@ -7,6 +7,7 @@ bash index.sh<br>
 =====================<br>
 -Termux:<br>
 pkg install grep<br>
+pkg install gawk<br>
 pkg install shuf<br>
 pkg install jq<br>
 pkg install curl<br>
