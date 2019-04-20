@@ -1,8 +1,17 @@
 #!/bin/bash
 # Bot Marlboro Coded By Achon666ju5t - Demeter16
+GREEN='\e[38;5;82m'
+CYAN='\e[38;5;39m'
+RED='\e[38;5;196m'
+YELLOW='\e[93m'
+PING='\e[38;5;198m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+BLINK='\e[5m'
+HIDDEN='\e[8m'
 echo -n 'Started at: '
-date +%R
-cok='cookies.txt'
+printf "${PING}$(date +%R)${NC}\n"
+cok='marlboro.txt'
 countdown() {
   secs=$1
   shift
@@ -32,19 +41,25 @@ login(){
 	--cookie-jar $cok -b $cok
 }
 get_point(){
-	curl -s 'https://www.marlboro.id/profile' -b $cok -c $cok
+	curl -s 'https://www.marlboro.id/' -b $cok -c $cok | grep -Po "(?<=<img src=\"/assets/images/icon-point.svg\"/><div>).*?(?=</div></div>)"
 }
 get_csrf(){
 	curl -s 'https://www.marlboro.id/auth/login?ref_uri=/profile' --cookie-jar $cok
 }
 get_video(){
-	curl -s 'https://www.marlboro.id/' -b $cok --cookie-jar $cok | grep -Po "(?<=data-stringid=\").*?(?=\" data-source=\")"
+	curl -s 'https://www.marlboro.id/' -b $cok --cookie-jar $cok | grep -Po "(?<=data-ref\=\"https://www.marlboro.id/discovered/article/).*?(?=\">)" | grep -v 'loadArticles'
+}
+submit_video(){
+	curl -s -X POST -b $cok --cookie-jar $cok \
+	--url 'https://www.marlboro.id/article/video-play/'$1 \
+	-d 'decide_csrf='$2'&log_id='$3'&duration=30.118&total_duration=30.482667'\
+
 }
 nonton_video(){
 	link=$1
 	ssrf=$2
 	curl -sL -X POST \
-	--url "https://www.marlboro.id/article/play-video/$link/update" \
+	--url "https://www.marlboro.id/article/video-play/$link" \
 	--data-urlencode "decide_csrf=$ssrf" \
 	--data-urlencode 'page=undefined' \
 	-b $cok --cookie-jar $cok
@@ -52,36 +67,40 @@ nonton_video(){
 function verif_data(){
 	curl -s -X POST \
 	--url 'https://www.marlboro.id/auth/update-profile'\
-	-d 'address=jl+aceh+asoy+geboy+809&city=339&confirm_password_chg=&decide_csrf='$1'&email=&fav_brand1=500019272&fav_brand2=500020640&interest=Travel&interest_raw=Travel&new_password_chg=&old_password_chg=&password=&phone_number=08953407244729&postalcode=0&province=30&security_answer=rihana&security_question=500001007&stop_subscribe_email_promo=true' \
+	-d 'address=jl+aceh+asoy+geboy+809&city=339&confirm_password_chg=&decide_csrf='$1'&email=&fav_brand1=500019272&fav_brand2=500020640&interest=Travel&interest_raw=Travel&new_password_chg=&old_password_chg=&password=&phone_number=08953407244729&postalcode=0&province=30&security_answer=rihana&security_question=500001007&stop_subscribe_email_promo=false' \
 	-b $cok --cookie-jar $cok \
 	| jq .data.status
 }
 get_new_csrf(){
-	curl -s --url 'https://www.marlboro.id/' -b $cok -c $cok
+	curl -s --url 'https://www.marlboro.id/profile' -b $cok -c $cok
 }
-echo -n 'Jumlah Login: '
-read jumlah
+printf "${YELLOW}"
+jumlah='4'
 echo -n 'Do With Verif data? [y/n] '
 read verif
 echo -n 'Do With Watching Movie? [y/n] '
 read wacing
 read -p 'Your Email List File: ' list
+printf "${NC}"
 y=$(gawk -F: '{ print $1 }' $list)
 x=$(gawk -F: '{ print $2 }' $list)
-IFS=$'\r\n' GLOBIGNORE='*' command eval  'pwd=($x)'
 IFS=$'\r\n' GLOBIGNORE='*' command eval  'email=($y)'
+IFS=$'\r\n' GLOBIGNORE='*' command eval  'passw=($x)'
 for (( i = 0; i < "${#email[@]}"; i++ )); do
-	decide_csrf=$(echo $(get_csrf) | grep -Po "(?<=name\=\"decide_csrf\" value\=\").*?(?=\" />)" | head -1)
+	decide_csrff=$(echo $(get_csrf) | grep -Po "(?<=name\=\"decide_csrf\" value\=\").*?(?=\" />)" | head -1)
 	emails="${email[$i]}"
-	printf "%-50s $emails\n"
-	pw="${pwd[$i]}"
+	pw="${passw[$i]}"
+	login $emails $pw $decide_csrff | grep -Po "(?<=\"message\":\").*?(?=\")" &> /dev/null
+	let "sebelum=$(get_point)-25"
+	printf "${RED}[x] ${YELLOW}$emails | ${sebelum} ${RED}[x]\n"
 	if [[ "$verif" = 'y' ]]; then
-		ceklogin=$(login $emails $pw $decide_csrf | grep -Po "(?<=\"message\":\").*?(?=\")")
-		gover=$(verif_data $decide_csrf)
-		echo -n "Verif Data: "
-		echo -n "$gover | Your Point $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)") | "
+		ceklogin=$(login $emails $pw $decide_csrff | grep -Po "(?<=\"message\":\").*?(?=\")")
+		point=$(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)")
+		gover=$(verif_data $decide_csrff)
+		echo -e "${YELLOW}[+] Verif Data: ${gover} [+]${NC}"
 	fi
 		for ((e=0;e<$jumlah; e++ )); do
+		decide_csrf=$(echo $(get_csrf) | grep -Po "(?<=name\=\"decide_csrf\" value\=\").*?(?=\" />)" | head -1)
 		ceklogin=$(login $emails $pw $decide_csrf | grep -Po "(?<=\"message\":\").*?(?=\")")
 	if [[ "$ceklogin" =~ 'Akun lo telah dikunci' ]]; then
 		echo "Akun Dikunci (locked)"
@@ -89,43 +108,37 @@ for (( i = 0; i < "${#email[@]}"; i++ )); do
 	elif [[ "$ceklogin" =~ 'Email atau password yang lo masukan salah' ]]; then
 		echo -n "Wrong Password"
 	elif [[ "$ceklogin" =~ 'success' ]]; then
-		printf "AutoLogin: OK |"
-		if [[ "$verif" = 'n' && "$wacing" = 'n' ]]; then
-			printf "Your Point: $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)") "
+		printf "${GREEN}[+]${CYAN} AutoLogin: OK |"
+		if [[ "$verif" = 'n' && "$wacing" = 'n' && "$klaim" = 'n' ]]; then
+			printf "${CYAN}[+] ${GREEN}Your Point: $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)") ${NC}"
 		fi
 		if [[ "$wacing" = 'y' ]]; then
 			for nonton in $(get_video $decide_csrf | shuf | head -1); do
-				echo -n "->$nonton | "
+				printf "${PING}Lagi Nonton|"
+				lalajo=$(nonton_video $nonton $decide_csrf)
 				for ((oo=0; oo<3; oo++)); do
-					multi=$(get_new_csrf)
-					point=$(echo $(get_point) | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)")
-					new_csrf=$(echo $multi | grep -Po "(?<=name\=\"decide_csrf\" value\=\").*?(?=\" />)" | head -1)
-					lalajo=$(nonton_video $nonton $decide_csrf)
-					# echo $lalajo | jq .
-					# echo $multi
-					nobar=$(echo $lalajo | jq .data.finished)
+					lid=$(echo $lalajo | jq .data.log_id | tr -d \")
+					nobar=$(submit_video $nonton $decide_csrf $lid | jq .data.finished)
 					if [[ "$nobar" = 'true' ]]; then
 						decide_csrf=$(echo $(get_csrf) | grep -Po "(?<=name\=\"decide_csrf\" value\=\").*?(?=\" />)" | head -1)
-						echo -n 'Sukses Nonton: '
+						echo -e "${GREEN}[OK] ${YELLOW}"
 						break
 					elif [[ "$lalajo" =~ "Action is not allowed" ]]; then
 						echo -n "BAD CSRF | "
 						break
 					else
-						sleep 11
+						sleep 29
 					fi
 				done
 			done
-		# echo -n "OK | Your Point $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)")"
 		fi
-		ceklogin=$(login $emails $pw $decide_csrf | grep -Po "(?<=\"message\":\").*?(?=\")")
-		printf "Your Point: $(get_point | grep -Po "(?<=\<span class=\"point-place\" data-current=\").*?(?=\">)")\n"
 else
 	# echo "$ceklogin"
 		echo -n "Wrong CSRF | "
 	fi
 done
-echo ''
+		ceklogin=$(login $emails $pw $decide_csrf | grep -Po "(?<=\"message\":\").*?(?=\")")
+		printf "Your Point: $(get_point) [+]\n${NC}"
 done
 echo -n 'Ends at: '
 date +%R
