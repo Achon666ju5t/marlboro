@@ -47,7 +47,7 @@ get_csrf(){
 	curl -s 'https://www.marlboro.id/auth/login?ref_uri=/profile' --cookie-jar $cok
 }
 get_video(){
-	curl -s 'https://www.marlboro.id/' -b $cok --cookie-jar $cok | grep -Po "(?<=data-ref\=\"https://www.marlboro.id/discovered/article/).*?(?=\">)" | grep -v 'loadArticles'
+	curl -s 'https://www.marlboro.id/' -b $cok --cookie-jar $cok | grep -Po "(?<=data-ref\=\"https://www.marlboro.id/discovered/article/).*?(?=\">)" | grep -v 'loadArticles' | grep -v 'pillar-icon'
 }
 submit_video(){
 	curl -s -X POST -b $cok --cookie-jar $cok \
@@ -76,11 +76,9 @@ get_new_csrf(){
 }
 printf "${YELLOW}"
 jumlah='4'
-echo -n 'Do With Verif data? [y/n] '
-read verif
-echo -n 'Do With Watching Movie? [y/n] '
-read wacing
-read -p 'Your Email List File: ' list
+verif='n'
+wacing='y'
+list='new.txt'
 printf "${NC}"
 y=$(gawk -F: '{ print $1 }' $list)
 x=$(gawk -F: '{ print $2 }' $list)
@@ -118,13 +116,14 @@ for (( i = 0; i < "${#email[@]}"; i++ )); do
 				lalajo=$(nonton_video $nonton $decide_csrf)
 				for ((oo=0; oo<3; oo++)); do
 					lid=$(echo $lalajo | jq .data.log_id | tr -d \")
+					# echo $nonton
 					nobar=$(submit_video $nonton $decide_csrf $lid | jq .data.finished)
 					if [[ "$nobar" = 'true' ]]; then
 						decide_csrf=$(echo $(get_csrf) | grep -Po "(?<=name\=\"decide_csrf\" value\=\").*?(?=\" />)" | head -1)
 						echo -e "${GREEN}[OK] ${YELLOW}"
 						break
 					elif [[ "$lalajo" =~ "Action is not allowed" ]]; then
-						echo -n "BAD CSRF | "
+						echo -n "BAD CSRF"
 						break
 					else
 						sleep 29
@@ -139,6 +138,7 @@ else
 done
 		ceklogin=$(login $emails $pw $decide_csrf | grep -Po "(?<=\"message\":\").*?(?=\")")
 		printf "Your Point: $(get_point) [+]\n${NC}"
+		rm $cok
 done
 echo -n 'Ends at: '
 date +%R
