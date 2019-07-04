@@ -1,6 +1,7 @@
 #!/bin/bash
 # Bot Marlboro Coded By Achon666ju5t - Demeter16
 date +%R
+list='' #Your Email:pass list
 rm vid.txt
 GREEN='\e[38;5;82m'
 CYAN='\e[38;5;39m'
@@ -69,7 +70,6 @@ nonton_video(){
 printf "${YELLOW}"
 jumlah='6'
 wacing='y'
-list='ren.txt'
 printf "${NC}"
 y=$(gawk -F: '{ print $1 }' $list)
 x=$(gawk -F: '{ print $2 }' $list)
